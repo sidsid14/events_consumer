@@ -8,6 +8,8 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
+import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
+import org.springframework.util.backoff.ExponentialBackOff;
 import org.springframework.util.backoff.FixedBackOff;
 
 import java.util.List;
@@ -25,7 +27,15 @@ public class LibraryEventsConsumerConfig {
         //Custom error handler waits for 1 sec and retry 2 times
         FixedBackOff fixedBackOff = new FixedBackOff(1000L, 2);
 
-        DefaultErrorHandler errorHandler = new DefaultErrorHandler(fixedBackOff);
+        ExponentialBackOffWithMaxRetries expBackOff = new ExponentialBackOffWithMaxRetries(2);
+        expBackOff.setInitialInterval(1_000L);
+        expBackOff.setMultiplier(2.0);
+        expBackOff.setMaxInterval(2_000L);
+
+        DefaultErrorHandler errorHandler = new DefaultErrorHandler(
+//                fixedBackOff
+                expBackOff
+        );
 
         List<Class<IllegalArgumentException>> exceptionsToIgnoreList = List.of(IllegalArgumentException.class);
 
