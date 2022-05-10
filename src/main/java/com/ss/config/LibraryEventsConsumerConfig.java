@@ -10,6 +10,8 @@ import org.springframework.kafka.core.ConsumerFactory;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.util.backoff.FixedBackOff;
 
+import java.util.List;
+
 @Configuration
 @EnableKafka
 @Slf4j
@@ -22,7 +24,13 @@ public class LibraryEventsConsumerConfig {
     public DefaultErrorHandler errorHandler(){
         //Custom error handler waits for 1 sec and retry 2 times
         FixedBackOff fixedBackOff = new FixedBackOff(1000L, 2);
+
         DefaultErrorHandler errorHandler = new DefaultErrorHandler(fixedBackOff);
+
+        List<Class<IllegalArgumentException>> exceptionsToIgnoreList = List.of(IllegalArgumentException.class);
+
+        exceptionsToIgnoreList.forEach(errorHandler::addNotRetryableExceptions);
+
         errorHandler.setRetryListeners((consumerRecord, e, i) -> log.info("Failed record in retry listener, Exception : {}, deliveryAttempt : {}", e.getMessage(),i));
         return errorHandler;
     }
