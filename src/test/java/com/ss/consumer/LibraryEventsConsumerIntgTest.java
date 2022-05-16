@@ -143,6 +143,14 @@ public class LibraryEventsConsumerIntgTest {
 
         verify(libraryEventsConsumerSpy,times(1)).onMessage(isA(ConsumerRecord.class));
         verify(libraryEventsServiceSpy,times(1)).processLibraryEvent(isA(ConsumerRecord.class));
+
+        Map<String, Object> configs = new HashMap<>(KafkaTestUtils.consumerProps("group2", "true", embeddedKafkaBroker));
+        consumer = new DefaultKafkaConsumerFactory<>(configs, new IntegerDeserializer(), new StringDeserializer()).createConsumer();
+        embeddedKafkaBroker.consumeFromAnEmbeddedTopic(consumer, deadLetterTopic);
+
+        ConsumerRecord<Integer, String> consumerRecord = KafkaTestUtils.getSingleRecord(consumer, deadLetterTopic);
+        System.out.println("Consumer Record is : "+consumerRecord.value());
+        assertEquals(json, consumerRecord.value());
     }
 
     @Test
@@ -161,7 +169,7 @@ public class LibraryEventsConsumerIntgTest {
         embeddedKafkaBroker.consumeFromAnEmbeddedTopic(consumer, retryTopic);
 
         ConsumerRecord<Integer, String> consumerRecord = KafkaTestUtils.getSingleRecord(consumer, retryTopic);
-        System.out.println("Consuer Record is : "+consumerRecord.value());
+        System.out.println("Consumer Record is : "+consumerRecord.value());
         assertEquals(json, consumerRecord.value());
 
     }

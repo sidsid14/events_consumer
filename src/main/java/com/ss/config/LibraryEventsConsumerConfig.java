@@ -41,6 +41,7 @@ public class LibraryEventsConsumerConfig {
     public DeadLetterPublishingRecoverer publishingRecoverer(){
         DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(kafkaTemplate,
                 (r, e) -> {
+                    log.error("Exception in publishing recoverer : {}",e.getMessage(),e);
                     if (e.getCause() instanceof RecoverableDataAccessException) {
                         return new TopicPartition(retryTopic, r.partition());
                     }
@@ -69,8 +70,8 @@ public class LibraryEventsConsumerConfig {
         List<Class<IllegalArgumentException>> exceptionsToIgnoreList = List.of(IllegalArgumentException.class);
         List<Class<RecoverableDataAccessException>> exceptionsToRetryList = List.of(RecoverableDataAccessException.class);
 
-//        exceptionsToIgnoreList.forEach(errorHandler::addNotRetryableExceptions);
-        exceptionsToRetryList.forEach(errorHandler::addRetryableExceptions);
+        exceptionsToIgnoreList.forEach(errorHandler::addNotRetryableExceptions);
+//        exceptionsToRetryList.forEach(errorHandler::addRetryableExceptions);
 
         errorHandler.setRetryListeners((consumerRecord, e, i) -> log.info("Failed record in retry listener, Exception : {}, deliveryAttempt : {}", e.getMessage(),i));
         return errorHandler;
